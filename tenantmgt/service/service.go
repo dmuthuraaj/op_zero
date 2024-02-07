@@ -7,5 +7,8 @@ import (
 )
 
 type Service interface {
-	CreateTenant(ctx context.Context, tenant model.Tenant) error
+	CreateTenant(ctx context.Context, tenant *model.Tenant) error
+	GetTenantByName(ctx context.Context, teantName string) (*model.Tenant, error)
+	UpdateTenantContactInfo(ctx context.Context, tenant *model.Tenant) error
+	DeleteTenantByName(ctx context.Context, teantName string) error
 }

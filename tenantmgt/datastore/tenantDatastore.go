@@ -46,7 +46,7 @@ func NewTenantDatastore() *TenantDatastore {
 	return &TenantDatastore{db: client}
 }
 
-func (t *TenantDatastore) CreateTenant(ctx context.Context, tenant model.Tenant) error {
+func (t *TenantDatastore) CreateTenant(ctx context.Context, tenant *model.Tenant) error {
 	coll := t.db.Database(DATABASE).Collection(TENANT_COLLECTION)
 	_, err := coll.InsertOne(ctx, tenant)
 	if err != nil {
@@ -66,4 +66,36 @@ func (t *TenantDatastore) GetTenantByName(ctx context.Context, tenantName string
 		return nil, err
 	}
 	return &tenant, nil
+}
+
+func (t *TenantDatastore) UpdateTenantContactInfo(ctx context.Context, tenant *model.Tenant) error {
+	coll := t.db.Database(DATABASE).Collection(TENANT_COLLECTION)
+	filter := bson.M{"_id": tenant.Identifier}
+	update := bson.M{"$set": bson.M{
+		"contactInfo": bson.M{
+			"name":         tenant.ContactInfo.Name,
+			"email":        tenant.ContactInfo.Email,
+			"mobileNumber": tenant.ContactInfo.MobileNumber,
+		},
+		"updatedAt": tenant.UpdatedAt,
+	}}
+	res, err := coll.UpdateOne(ctx, filter, update)
+	if res.MatchedCount != 1 {
+		return ErrTenantNotFound
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TenantDatastore) DeleteTenantByName(ctx context.Context, tenantName string) error {
+	coll := t.db.Database(DATABASE).Collection(TENANT_COLLECTION)
+	filter := bson.M{"tenantName": tenantName}
+	res, err := coll.DeleteOne(ctx, filter)
+	if res.DeletedCount != 1 {
+		return ErrTenantNotFound
+	} else if err != nil {
+		return err
+	}
+	return nil
 }

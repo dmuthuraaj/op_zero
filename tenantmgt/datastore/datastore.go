@@ -7,6 +7,8 @@ import (
 )
 
 type DataStore interface {
-	CreateTenant(context.Context, model.Tenant) error
+	CreateTenant(context.Context, *model.Tenant) error
 	GetTenantByName(ctx context.Context, tenantName string) (*model.Tenant, error)
+	UpdateTenantContactInfo(ctx context.Context, tenant *model.Tenant) error
+	DeleteTenantByName(ctx context.Context, tenantName string) error
 }
