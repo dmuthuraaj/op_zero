@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  tenantmgt:
+    build:
+      context: ./tenantmgt/
+      dockerfile: Dockerfile
+    container_name: tenantmgt
+    depends_on:
+      - mongodb
+    environment:
+      PORT: 8082
+      MONGODB_URI: mongodb://admin:pass@mongodb
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: pass
+    ports:
+      - 8082:8082
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: admin
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: pass
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data/mongodb:/data/db:rw
+
+  mongo-express:
+    image: mongo-express
+    container_name: mexpress
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=pass
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:pass@mongodb
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+
+  # cache:
+  #   image: redis:latest
+  #   restart: always
+  #   ports:
+  #     - "6379:6379"
+  #   command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+  #   volumes:
+  #     - ./data/cache:/data/cache
+
+volumes:
+  mongodb:
+    driver: local
+  # cache:
+  #   driver: local

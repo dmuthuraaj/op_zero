@@ -1,0 +1,184 @@
+// // main.go
+// package main
+
+// import (
+// 	"context"
+// 	"encoding/json"
+// 	"fmt"
+// 	"net/http"
+// 	"os"
+// 	"time"
+
+// 	"github.com/coreos/go-oidc"
+// 	"github.com/gorilla/mux"
+// 	"golang.org/x/oauth2"
+// 	"gopkg.in/square/go-jose.v2/jwt"
+// )
+
+// var (
+// 	oidcProvider, _ = oidc.NewProvider(context.Background(), "http://dex:5556/dex")
+// 	oidcVerifier    = oidcProvider.Verifier(&oidc.Config{ClientID: "example-app", SkipClientIDCheck: true})
+// 	oauth2Config    = &oauth2.Config{
+// 		ClientID:     "example-app",
+// 		ClientSecret: "ZXhhbXBsZS1hcHAtc2VjcmV0",
+// 		RedirectURL:  "http://localhost:8089/callback",
+// 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "offline_access"},
+// 		Endpoint:     oidcProvider.Endpoint(),
+// 	}
+// 	jwtSecret      = []byte("your-jwt-secret")
+// 	accessTokenTTL = time.Hour
+// )
+
+// type UserInfo struct {
+// 	Subject string `json:"sub"`
+// 	Name    string `json:"name"`
+// 	Email   string `json:"email"`
+// }
+
+// type TokensResponse struct {
+// 	AccessToken  string `json:"access_token"`
+// 	RefreshToken string `json:"refresh_token"`
+// }
+
+// var refreshTokens = make(map[string]*oauth2.Token)
+
+// func handleLogin(w http.ResponseWriter, r *http.Request) {
+// 	url := oauth2Config.AuthCodeURL("state", oauth2.AccessTypeOffline)
+// 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+// }
+
+// func handleCallback(w http.ResponseWriter, r *http.Request) {
+// 	oauth2Token, err := oauth2Config.Exchange(context.Background(), r.URL.Query().Get("code"))
+// 	if err != nil {
+// 		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
+// 	if !ok {
+// 		http.Error(w, "No id_token in token response", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	idToken, err := oidcVerifier.Verify(context.Background(), rawIDToken)
+// 	if err != nil {
+// 		http.Error(w, "Failed to verify ID token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	var userInfo UserInfo
+// 	if err := idToken.Claims(&userInfo); err != nil {
+// 		http.Error(w, "Failed to extract claims from ID token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	// In a real-world scenario, you would associate the OpenID Connect user with a user in your system.
+
+// 	// Store the refresh token securely (in-memory store for simplicity in this example)
+// 	refreshTokens[userInfo.Subject] = oauth2Token
+
+// 	// Generate a JWT token for authorization
+// 	accessToken, err := generateAccessToken(userInfo)
+// 	if err != nil {
+// 		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	// Now, you can use the access token for authorization.
+
+// 	// For simplicity, let's just respond with the user's OpenID Connect information and tokens.
+// 	response := TokensResponse{
+// 		AccessToken:  accessToken,
+// 		RefreshToken: oauth2Token.RefreshToken,
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	json.NewEncoder(w).Encode(response)
+// }
+
+// func handleRefresh(w http.ResponseWriter, r *http.Request) {
+// 	// Extract the refresh token from the request (in a real-world scenario, handle this securely)
+// 	refreshToken := r.URL.Query().Get("refresh_token")
+
+// 	// Retrieve the corresponding OAuth2 token from the store
+// 	oauth2Token, ok := refreshTokens[refreshToken]
+// 	if !ok {
+// 		http.Error(w, "Invalid refresh token", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	// Check if the access token is expired
+// 	if oauth2Token.Expiry.Before(time.Now()) {
+// 		http.Error(w, "Access token has already expired", http.StatusUnauthorized)
+// 		return
+// 	}
+
+// 	// Generate a new access token
+// 	userInfo, err := getUserInfoFromToken(oauth2Token)
+// 	if err != nil {
+// 		http.Error(w, "Failed to get user info from token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	accessToken, err := generateAccessToken(userInfo)
+// 	if err != nil {
+// 		http.Error(w, "Failed to generate access token", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	// Respond with the new access token
+// 	response := TokensResponse{
+// 		AccessToken:  accessToken,
+// 		RefreshToken: oauth2Token.RefreshToken,
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	json.NewEncoder(w).Encode(response)
+// }
+
+// func generateAccessToken(userInfo UserInfo) (string, error) {
+// 	claims := jwt.Claims{
+// 		Issuer:    "your-app",
+// 		Subject:   userInfo.Subject,
+// 		Audience:  jwt.Audience{"your-app"},
+// 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenTTL)),
+// 	}
+
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+// 	return token.SignedString(jwtSecret)
+// }
+
+// func getUserInfoFromToken(token *oauth2.Token) (*UserInfo, error) {
+// 	rawIDToken, ok := token.Extra("id_token").(string)
+// 	if !ok {
+// 		return nil, fmt.Errorf("No id_token in token response")
+// 	}
+
+// 	idToken, err := oidcVerifier.Verify(context.Background(), rawIDToken)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("Failed to verify ID token: %v", err)
+// 	}
+
+// 	var userInfo UserInfo
+// 	if err := idToken.Claims(&userInfo); err != nil {
+// 		return nil, fmt.Errorf("Failed to extract claims from ID token: %v", err)
+// 	}
+
+// 	return &userInfo, nil
+// }
+
+// func main() {
+// 	router := mux.NewRouter()
+
+// 	router.HandleFunc("/login", handleLogin).Methods("GET")
+// 	router.HandleFunc("/callback", handleCallback).Methods("GET")
+// 	router.HandleFunc("/refresh", handleRefresh).Methods("POST")
+
+// 	port := os.Getenv("PORT")
+// 	if port == "" {
+// 		port = "8089"
+// 	}
+
+// 	fmt.Printf("Server is running on :%s\n", port)
+// 	http.ListenAndServe(":"+port, router)
+// }
