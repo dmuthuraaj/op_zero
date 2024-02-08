@@ -4,11 +4,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/dmuthuraaj/op_zero/tenantmgt"
+	"github.com/op_zero/authserver"
 )
 
 const (
-	PORT = "8082"
+	PORT = "8081"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 	if port == "" {
 		port = PORT
 	}
-	server := tenantmgt.NewServer()
+	server := authserver.NewServer()
 	err = server.Run(":" + port)
 	if err != nil {
 		log.Fatalf("unable to start lisening to server on port: %s", port)

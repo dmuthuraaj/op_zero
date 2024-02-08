@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/dmuthuraaj/usermgt/model"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,7 +14,7 @@ import (
 
 const (
 	LOCAL_URI         = "mongodb://localhost:27017"
-	DATABASE          = "tenant"
+	DATABASE          = "tenantadm"
 	TENANT_COLLECTION = "tenants"
 )
 

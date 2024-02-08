@@ -5,8 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dmuthuraaj/usermgt/datastore"
-	"github.com/dmuthuraaj/usermgt/model"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/datastore"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/model"
+
 	"github.com/google/uuid"
 )
 

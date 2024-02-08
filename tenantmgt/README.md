@@ -1,4 +1,4 @@
-# TenantMgt Service
+# TENANT MANAGEMENT SERVICE
 
 ## Introduction
 

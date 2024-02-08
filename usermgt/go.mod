@@ -1,4 +1,4 @@
-module github.com/dmuthuraaj/op_zero/tenantmgt
+module github.com/dmuthuraaj/op_zero/usermgt
 
 go 1.21.5
 

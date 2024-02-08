@@ -1,6 +1,19 @@
 version: "3.8"
 
 services:
+  authServer:
+    build:
+      context: ./authServer/
+      dockerfile: Dockerfile
+    container_name: authServer
+    depends_on:
+      - mongodb
+    environment:
+      PORT: 8081
+      MONGODB_URI: mongodb://admin:pass@mongodb
+    ports:
+      - 8081:8081
+
   tenantmgt:
     build:
       context: ./tenantmgt/
@@ -11,10 +24,21 @@ services:
     environment:
       PORT: 8082
       MONGODB_URI: mongodb://admin:pass@mongodb
-      MONGO_USERNAME: admin
-      MONGO_PASSWORD: pass
     ports:
       - 8082:8082
+
+  usermgt:
+    build:
+      context: ./usermgt/
+      dockerfile: Dockerfile
+    container_name: usermgt
+    depends_on:
+      - mongodb
+    environment:
+      PORT: 8083
+      MONGODB_URI: mongodb://admin:pass@mongodb
+    ports:
+      - 8083:8083
 
   mongodb:
     image: mongo
@@ -38,7 +62,7 @@ services:
       - ME_CONFIG_MONGODB_URL=mongodb://admin:pass@mongodb
     restart: unless-stopped
     ports:
-      - "8081:8081"
+      - "8085:8085"
     depends_on:
       - mongodb
 

@@ -1,9 +1,9 @@
-package usermgt
+package tenantmgt
 
 import (
-	"github.com/dmuthuraaj/usermgt/datastore"
-	"github.com/dmuthuraaj/usermgt/handler"
-	"github.com/dmuthuraaj/usermgt/service"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/datastore"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/handler"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/service"
 	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
 )

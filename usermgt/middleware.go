@@ -1,4 +1,4 @@
-package tenantmgt
+package usermgt
 
 import (
 	"github.com/gin-gonic/gin"

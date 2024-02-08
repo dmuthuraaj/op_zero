@@ -3,7 +3,7 @@ package datastore
 import (
 	"context"
 
-	"github.com/dmuthuraaj/usermgt/model"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/model"
 )
 
 type DataStore interface {

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dmuthuraaj/usermgt/model"
-	"github.com/dmuthuraaj/usermgt/service"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/model"
+	"github.com/dmuthuraaj/op_zero/tenantmgt/service"
 	"github.com/gin-gonic/gin"
 )
 
