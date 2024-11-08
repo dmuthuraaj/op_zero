@@ -33,6 +33,7 @@ func (us *UserService) CreateUser(ctx context.Context, user *model.User) error {
 	if err == nil && t != nil {
 		return ErrUserAlreadyAdded
 	}
+	// TODO: Add validation part
 	user.Identifier = uuid.New().String()
 	user.Password, _ = utils.GenerateFromPassword(user.Password)
 	user.Active = true

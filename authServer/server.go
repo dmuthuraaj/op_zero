@@ -1,43 +1,72 @@
-package authserver
+package main
 
 import (
 	"log"
+	"net/http"
 
-	"github.com/gin-contrib/logger"
-	"github.com/gin-gonic/gin"
-	"github.com/op_zero/authserver/config"
-	"github.com/op_zero/authserver/datastore"
-	handler "github.com/op_zero/authserver/handlers"
-	"github.com/op_zero/authserver/services"
+	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/go-oauth2/oauth2/v4/manage"
+	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/go-oauth2/oauth2/v4/server"
+	mongo "gopkg.in/go-oauth2/mongo.v3"
 )
 
-const (
-	uriToken    = "/token"
-	uriRevoke   = "/revoke"
-	uriDevice   = "/device/code"
-	uriUserInfo = "/userinfo"
-	uriAutorize = "/authorize"
-)
+func main() {
+	manager := manage.NewDefaultManager()
 
-func NewServer(config config.Config) (*gin.Engine, error) {
-	var err error
-	// gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	r.Use(logger.SetLogger())
-	tokenDatastore, err := datastore.NewTokenDatastore(config)
-	if err != nil {
-		return nil, err
-	}
-	authService := services.NewTokenService(tokenDatastore, config)
-	handler := handler.NewAuthHandler(authService)
-	if config.Server.FirstSeed {
-		err = authService.DataInitialize()
+	// client memory store
+	storeConfigs := mongo.NewStoreConfig(10, 5)
+	mongoConf := mongo.NewConfigNonReplicaSet(
+		"mongodb://localhost:27017",
+		"oauth2",  // database name
+		"root",    // username to authenticate with db
+		"example", // password to authenticate with db
+		"serviceName",
+	)
+
+	// use mongodb token store
+	manager.MapTokenStorage(
+		mongo.NewTokenStore(mongoConf, storeConfigs), // with timeout
+		// mongo.NewTokenStore(mongoConf), // no timeout
+	)
+
+	clientStore := mongo.NewClientStore(mongoConf, storeConfigs) // with timeout
+	// clientStore := mongo.NewClientStore(mongoConf) // no timeout
+
+	manager.MapClientStorage(clientStore)
+
+	// register a service
+	clientStore.Create(&models.Client{
+		ID:     "confidential",
+		Secret: "demo",
+		Domain: "http://localhost",
+		UserID: "frontend",
+		Public: true,
+	})
+
+	srv := server.NewServer(server.NewConfig(), manager)
+	srv.SetAllowGetAccessRequest(true)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
+
+	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+		log.Println("Internal Error:", err.Error())
+		return
+	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		log.Println("Response Error:", re.Error.Error())
+	})
+
+	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
+		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
-			log.Println("data initialization failed with error: ", err)
-			return nil, err
+			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
-	}
-	authRouterGroup := r.Group("auth")
-	authRouterGroup.POST(uriToken, handler.TokenHandler)
-	return r, nil
+	})
+
+	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		srv.HandleTokenRequest(w, r)
+	})
+
+	log.Fatal(http.ListenAndServe(":9096", nil))
 }

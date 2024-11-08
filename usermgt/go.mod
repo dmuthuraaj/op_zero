@@ -1,6 +1,6 @@
 module github.com/dmuthuraaj/op_zero/usermgt
 
-go 1.23
+go 1.20
 
 require (
 	github.com/gin-contrib/logger v1.0.0

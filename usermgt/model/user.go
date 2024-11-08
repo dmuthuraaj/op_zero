@@ -19,7 +19,7 @@ type User struct {
 	LastName     string    `json:"lastName" bson:"lastName"`
 	MobileNumber string    `json:"mobileNumber" bson:"mobileNumber" binding:"required"`
 	Email        string    `json:"email" bson:"email" binding:"required"`
-	Password     string    `json:"password" bson:"password" binding:"required"`
+	Password     string    `json:"-" bson:"password" binding:"required"`
 	Tenant       string    `json:"tenant" bson:"tenant" binding:"required"`
 	ProfileUrl   string    `json:"profileUrl" bson:"profileUrl"`
 	Active       bool      `json:"active" bson:"active"`

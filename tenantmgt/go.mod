@@ -1,6 +1,6 @@
 module github.com/dmuthuraaj/op_zero/tenantmgt
 
-go 1.21.5
+go 1.20
 
 require (
 	github.com/gin-contrib/logger v1.0.0

@@ -2,36 +2,25 @@ package main
 
 import (
 	"log"
-	"os"
+	"net/http"
 
-	"github.com/op_zero/authserver"
-	"github.com/op_zero/authserver/config"
+	"github.com/spf13/viper"
 )
 
-const (
-	PORT = "8090"
-)
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Welcome"))
+}
 
 func main() {
 	var err error
-	var serverConfig *config.Config
-	profile := os.Getenv("PROFILE")
-	if profile == "" {
-		profile = "dev"
-	}
-	serverConfig, err = config.LoadConfigFile(profile)
+	viper.SetConfigFile("config.yaml")
+	err = viper.ReadInConfig()
 	if err != nil {
-		log.Println(err)
-		return
+		log.Println("unable to config file: ", err)
 	}
-	log.Println("Config: ", serverConfig)
-	server, err := authserver.NewServer(*serverConfig)
-	if err != nil {
-		log.Println("error: ", err)
-		return
-	}
-	err = server.Run(":" + serverConfig.Server.Port)
-	if err != nil {
-		log.Fatalf("unable to start lisening to server on port: %s", serverConfig.Server.Port)
-	}
+	port := viper.GetString("server.port")
+	log.Println("port: ", port)
+	handler := http.NewServeMux()
+	handler.HandleFunc("/", HomeHandler)
+	http.ListenAndServe(":"+port, handler)
 }
